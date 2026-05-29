@@ -6,7 +6,7 @@ import { AppModule } from "./app.module";
 const DEFAULT_PORT = 4000;
 
 function getPort(): number {
-  const configuredPort = process.env["API_PORT"];
+  const configuredPort = process.env["PORT"] ?? process.env["API_PORT"];
 
   if (!configuredPort) {
     return DEFAULT_PORT;

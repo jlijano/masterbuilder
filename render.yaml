@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: house-designer-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/api build
+    startCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @house-designer/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://house-designer-web.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: house-designer-db
+          property: connectionString
+      - key: AUTH_PROVIDER
+        value: local
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: AI_PROVIDER
+        value: local
+      - key: BILLING_PROVIDER
+        value: disabled
+
+  - type: web
+    name: house-designer-web
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/web build
+    startCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @house-designer/web exec next start -H 0.0.0.0 -p $PORT
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://house-designer-web.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        value: https://house-designer-api.onrender.com
+
+databases:
+  - name: house-designer-db
+    plan: free
+    region: oregon
+    postgresMajorVersion: "16"
+    databaseName: house_designer
+    user: house_designer

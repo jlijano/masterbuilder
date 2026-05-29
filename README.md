@@ -126,7 +126,9 @@ materials, uploads, exports, AI, teams, billing, and activity logs.
 ## Deployment
 
 The repository includes Docker and GitHub Actions foundations that do not require
-production secrets. See [docs/deployment.md](docs/deployment.md).
+production secrets. It also includes a Render Blueprint in `render.yaml` for a
+web service, API service, and PostgreSQL database. See
+[docs/deployment.md](docs/deployment.md).
 
 ## Contributing
 
