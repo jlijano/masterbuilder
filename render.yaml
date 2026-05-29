@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: NODE_ENV=development pnpm install --no-frozen-lockfile && NODE_ENV=development pnpm --filter @house-designer/api build
+    buildCommand: NODE_ENV=development pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/api build
     startCommand: pnpm --filter @house-designer/api start
     healthCheckPath: /health
     envVars:
@@ -34,7 +34,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: NODE_ENV=development pnpm install --no-frozen-lockfile && NODE_ENV=development pnpm --filter @house-designer/web build
+    buildCommand: NODE_ENV=development pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/web build
     startCommand: pnpm --filter @house-designer/web exec next start -H 0.0.0.0 -p $PORT
     healthCheckPath: /
     envVars:

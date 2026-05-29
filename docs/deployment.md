@@ -34,10 +34,13 @@ pnpm workspace and both apps depend on packages outside their app directories.
 It intentionally calls `pnpm` directly instead of `corepack enable`; Render's
 runtime image can expose package-manager shims in read-only system paths, and
 trying to overwrite them can fail the build before dependencies install.
-The build commands temporarily set `NODE_ENV=development` because Render service
+The install step temporarily sets `NODE_ENV=development` because Render service
 environment variables are visible during deploy, while TypeScript and Next.js
 still need development dependencies such as type packages during compilation.
-The services still run with `NODE_ENV=production` at runtime.
+The build and runtime steps still use the service's production environment.
+
+The web app includes an App Router `not-found.tsx` page so Render/Next builds do
+not fall back to a legacy generated `/404` route during prerendering.
 
 ### Render URLs
 
