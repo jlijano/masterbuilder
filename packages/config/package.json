@@ -1,0 +1,19 @@
+{
+  "name": "@house-designer/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared configuration presets for the house designer monorepo.",
+  "exports": {
+    "./eslint/base": "./eslint/base.mjs",
+    "./prettier": "./prettier/index.cjs",
+    "./typescript/base": "./typescript/base.json"
+  },
+  "files": ["eslint", "prettier", "typescript"],
+  "scripts": {
+    "build": "node -e \"console.log('config package ready')\"",
+    "clean": "node -e \"console.log('config package clean')\"",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "node -e \"console.log('config package typecheck ready')\""
+  }
+}

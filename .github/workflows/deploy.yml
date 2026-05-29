@@ -1,0 +1,13 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment placeholder
+        run: |
+          echo "Deployment hooks are intentionally disabled until provider secrets are configured."
+          echo "Use this workflow as the controlled entry point for future Vercel/API deployments."

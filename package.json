@@ -1,0 +1,38 @@
+{
+  "name": "house-designer-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered browser-based house designer monorepo.",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "clean": "turbo clean",
+    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @house-designer/database db:generate",
+    "db:migrate": "pnpm --filter @house-designer/database db:migrate",
+    "db:seed": "pnpm --filter @house-designer/database db:seed",
+    "dev": "turbo dev --parallel",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@types/node": "^22.13.1",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "prettier": "^3.5.1",
+    "turbo": "^2.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1",
+    "vitest": "^3.0.5"
+  }
+}

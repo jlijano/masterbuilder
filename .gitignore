@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.cjs
+
+# Build outputs
+dist/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime storage
+local-storage/
+uploads/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

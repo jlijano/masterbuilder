@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: house-designer-postgres
+    environment:
+      POSTGRES_DB: house_designer
+      POSTGRES_PASSWORD: house_designer
+      POSTGRES_USER: house_designer
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U house_designer -d house_designer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+    command: pnpm --filter @house-designer/api dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.example
+    environment:
+      API_PORT: 4000
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql://house_designer:house_designer@postgres:5432/house_designer?schema=public
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  web:
+    build:
+      context: .
+    command: pnpm --filter @house-designer/web dev
+    depends_on:
+      - api
+    env_file:
+      - .env.example
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  postgres-data:
