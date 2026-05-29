@@ -15,5 +15,6 @@ The web application uses Next.js App Router, React, TypeScript, and Tailwind CSS
 
 The deployed web app now includes a browser-first MVP for project creation, local
 project persistence, editor tools, object selection, material assignment, undo/redo,
-local AI demo actions, and JSON export. These flows intentionally use `localStorage`
-until the Phase 2 API and database modules are ready to back them.
+local AI demo actions, JSON export, uploaded image assets, and uploaded material
+textures. These flows intentionally use `localStorage` until the Phase 2 API and
+database modules are ready to back them.

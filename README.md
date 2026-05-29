@@ -20,7 +20,7 @@ Screenshots will be added once the editor shell and dashboard are implemented.
 - Turborepo monorepo with pnpm workspaces
 - Next.js App Router web application foundation
 - Browser-local project creation, project opening, and scene persistence
-- Interactive editor MVP with walls, rooms, furniture, materials, undo/redo, AI demo actions, and JSON export
+- Interactive editor MVP with walls, rooms, furniture, material painting, asset uploads, texture uploads, undo/redo, AI demo actions, and JSON export
 - NestJS API foundation with `GET /health`
 - Shared TypeScript package boundaries for UI, domain contracts, engine, database, and config
 - Prisma database package foundation targeting PostgreSQL

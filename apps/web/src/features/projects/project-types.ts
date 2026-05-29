@@ -19,6 +19,8 @@ export interface MaterialPreset {
   name: string;
   opacity: number;
   roughness: number;
+  source?: "default" | "upload" | "ai";
+  textureDataUrl?: string;
 }
 
 export interface WallObject {
@@ -78,5 +80,7 @@ export interface FurnitureAsset {
   depth: number;
   height: number;
   name: string;
+  source?: "default" | "upload";
+  thumbnailDataUrl?: string;
   width: number;
 }

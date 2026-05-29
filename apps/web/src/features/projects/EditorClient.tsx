@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MouseEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, MouseEvent, useEffect, useMemo, useState } from "react";
+import {
+  deleteUploadedAsset,
+  fileToDataUrl,
+  loadUploadedAssets,
+  saveUploadedAssets
+} from "./asset-storage";
 import {
   cloneScene,
   createId,
@@ -17,7 +23,9 @@ import type {
   DesignProject,
   EditorScene,
   EditorTool,
+  FurnitureAsset,
   FurnitureObject,
+  MaterialPreset,
   Point2D,
   RoomObject,
   SceneObject,
@@ -47,6 +55,10 @@ const tools: { id: EditorTool; label: string }[] = [
   { id: "measure", label: "Measure" }
 ];
 
+function isEditorTool(value: string | null): value is EditorTool {
+  return tools.some((tool) => tool.id === value);
+}
+
 function findObject(scene: EditorScene, objectId: string): SceneObject | undefined {
   return [...scene.rooms, ...scene.walls, ...scene.furniture].find((object) => object.id === objectId);
 }
@@ -71,21 +83,48 @@ function formatMeasurement(value: number): string {
   return `${Math.round(value / 10) / 10} m`;
 }
 
+function patternId(materialId: string): string {
+  return `material-${materialId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+function getMaterialFill(scene: EditorScene, materialId: string): string {
+  const material = scene.materials.find((candidate) => candidate.id === materialId);
+  return material?.textureDataUrl ? `url(#${patternId(material.id)})` : material?.color ?? "#94a3b8";
+}
+
 export function EditorClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedProjectId = searchParams.get("projectId");
+  const requestedTool = searchParams.get("tool");
   const [project, setProject] = useState<DesignProject | null>(null);
   const [activeTool, setActiveTool] = useState<EditorTool>("select");
   const [selectedId, setSelectedId] = useState("");
   const [selectedMaterialId, setSelectedMaterialId] = useState(defaultMaterials[0]?.id ?? "");
   const [activeAssetId, setActiveAssetId] = useState(furnitureAssets[0]?.assetId ?? "");
+  const [uploadedAssets, setUploadedAssets] = useState<FurnitureAsset[]>([]);
   const [draftWallStart, setDraftWallStart] = useState<Point2D | null>(null);
   const [measureStart, setMeasureStart] = useState<Point2D | null>(null);
   const [measureEnd, setMeasureEnd] = useState<Point2D | null>(null);
   const [history, setHistory] = useState<EditorScene[]>([]);
   const [future, setFuture] = useState<EditorScene[]>([]);
   const [status, setStatus] = useState("Select a tool and click the grid.");
+
+  const allFurnitureAssets = useMemo(
+    () => [...furnitureAssets, ...uploadedAssets],
+    [uploadedAssets]
+  );
+
+  useEffect(() => {
+    setUploadedAssets(loadUploadedAssets());
+  }, []);
+
+  useEffect(() => {
+    if (isEditorTool(requestedTool)) {
+      setActiveTool(requestedTool);
+      setStatus(`${tools.find((tool) => tool.id === requestedTool)?.label ?? "Tool"} tool active.`);
+    }
+  }, [requestedTool]);
 
   useEffect(() => {
     const projects = loadProjects();
@@ -117,6 +156,13 @@ export function EditorClient() {
 
     return findObject(project.scene, selectedId);
   }, [project, selectedId]);
+
+  const activeAsset = useMemo(
+    () =>
+      allFurnitureAssets.find((candidate) => candidate.assetId === activeAssetId) ??
+      allFurnitureAssets[0],
+    [activeAssetId, allFurnitureAssets]
+  );
 
   function commitScene(nextScene: EditorScene, nextStatus: string, selectObjectId?: string) {
     setProject((currentProject) => {
@@ -247,7 +293,9 @@ export function EditorClient() {
       return;
     }
 
-    const asset = furnitureAssets.find((candidate) => candidate.assetId === activeAssetId) ?? furnitureAssets[0];
+    const asset =
+      allFurnitureAssets.find((candidate) => candidate.assetId === activeAssetId) ??
+      allFurnitureAssets[0];
 
     if (!asset) {
       return;
@@ -551,10 +599,31 @@ export function EditorClient() {
       return;
     }
 
-    const aiMaterials = [
-      { color: "#e2e8f0", id: createId("mat"), name: "AI cloud plaster", opacity: 1, roughness: 0.72 },
-      { color: "#0f766e", id: createId("mat"), name: "AI deep teal", opacity: 1, roughness: 0.44 },
-      { color: "#a16207", id: createId("mat"), name: "AI aged brass", opacity: 1, roughness: 0.38 }
+    const aiMaterials: MaterialPreset[] = [
+      {
+        color: "#e2e8f0",
+        id: createId("mat"),
+        name: "AI cloud plaster",
+        opacity: 1,
+        roughness: 0.72,
+        source: "ai"
+      },
+      {
+        color: "#0f766e",
+        id: createId("mat"),
+        name: "AI deep teal",
+        opacity: 1,
+        roughness: 0.44,
+        source: "ai"
+      },
+      {
+        color: "#a16207",
+        id: createId("mat"),
+        name: "AI aged brass",
+        opacity: 1,
+        roughness: 0.38,
+        source: "ai"
+      }
     ];
 
     const nextMaterials = [...project.scene.materials, ...aiMaterials];
@@ -563,6 +632,125 @@ export function EditorClient() {
       { ...project.scene, materials: nextMaterials },
       "Local AI demo generated a color palette."
     );
+  }
+
+  async function uploadFurnitureAsset(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setStatus("Upload an image file for browser-preview assets. 3D model upload comes with the backend asset pipeline.");
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setStatus("Keep local browser asset uploads under 4 MB for this MVP.");
+      return;
+    }
+
+    try {
+      const thumbnailDataUrl = await fileToDataUrl(file);
+      const asset: FurnitureAsset = {
+        assetId: createId("asset"),
+        category: "Uploaded",
+        depth: 80,
+        height: 40,
+        name: file.name.replace(/\.[^.]+$/, ""),
+        source: "upload",
+        thumbnailDataUrl,
+        width: 120
+      };
+      const nextAssets = [asset, ...uploadedAssets];
+      saveUploadedAssets(nextAssets);
+      setUploadedAssets(nextAssets);
+      setActiveAssetId(asset.assetId);
+      setActiveTool("furniture");
+      setStatus(`${asset.name} uploaded. Click the grid to place it like a Sims build item.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Asset upload failed.");
+    }
+  }
+
+  async function uploadMaterialTexture(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!project || !file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setStatus("Upload an image file for a paintable material texture.");
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setStatus("Keep local browser material uploads under 4 MB for this MVP.");
+      return;
+    }
+
+    try {
+      const textureDataUrl = await fileToDataUrl(file);
+      const material: MaterialPreset = {
+        color: "#94a3b8",
+        id: createId("mat-upload"),
+        name: file.name.replace(/\.[^.]+$/, ""),
+        opacity: 1,
+        roughness: 0.55,
+        source: "upload",
+        textureDataUrl
+      };
+      setSelectedMaterialId(material.id);
+      setActiveTool("material");
+      commitScene(
+        { ...project.scene, materials: [material, ...project.scene.materials] },
+        `${material.name} texture uploaded. Click a room, wall, or object to paint it.`
+      );
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Material upload failed.");
+    }
+  }
+
+  function removeUploadedAsset(assetId: string) {
+    const nextAssets = deleteUploadedAsset(assetId);
+    setUploadedAssets(nextAssets);
+
+    if (activeAssetId === assetId) {
+      setActiveAssetId(furnitureAssets[0]?.assetId ?? "");
+    }
+
+    setStatus("Uploaded asset removed from the catalog. Placed scene objects remain editable.");
+  }
+
+  function removeSelectedMaterial(materialId: string) {
+    if (!project) {
+      return;
+    }
+
+    const fallbackMaterialId =
+      project.scene.materials.find((material) => material.id !== materialId)?.id ??
+      defaultMaterials[0]?.id ??
+      "";
+    const nextScene: EditorScene = {
+      ...project.scene,
+      furniture: project.scene.furniture.map((object) =>
+        object.materialId === materialId ? { ...object, materialId: fallbackMaterialId } : object
+      ),
+      materials: project.scene.materials.filter((material) => material.id !== materialId),
+      rooms: project.scene.rooms.map((object) =>
+        object.materialId === materialId ? { ...object, materialId: fallbackMaterialId } : object
+      ),
+      walls: project.scene.walls.map((object) =>
+        object.materialId === materialId ? { ...object, materialId: fallbackMaterialId } : object
+      )
+    };
+
+    setSelectedMaterialId(fallbackMaterialId);
+    commitScene(nextScene, "Uploaded material removed and affected objects were reset.");
   }
 
   function exportProjectJson() {
@@ -633,12 +821,27 @@ export function EditorClient() {
 
         <div className="grid flex-1 lg:grid-cols-[18rem_1fr_21rem]">
           <aside className="border-b border-white/10 bg-slate-900/80 p-4 lg:border-b-0 lg:border-r">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Furniture</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Build catalog</h2>
+              <label className="cursor-pointer rounded-md border border-cyan-300/40 px-2 py-1 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-300/10">
+                Upload
+                <input
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="sr-only"
+                  onChange={uploadFurnitureAsset}
+                  type="file"
+                />
+              </label>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              Pick an item, then click the grid to place it. Uploaded images become reusable local
+              assets.
+            </p>
             <div className="mt-4 grid gap-2">
-              {furnitureAssets.map((asset) => (
+              {allFurnitureAssets.map((asset) => (
                 <button
                   className={[
-                    "rounded-md border p-3 text-left transition hover:border-cyan-300/50 hover:bg-white/10",
+                    "relative rounded-md border p-3 text-left transition hover:border-cyan-300/50 hover:bg-white/10",
                     activeAssetId === asset.assetId
                       ? "border-cyan-300/60 bg-cyan-300/10"
                       : "border-white/10 bg-white/[0.05]"
@@ -651,15 +854,54 @@ export function EditorClient() {
                   }}
                   type="button"
                 >
+                  {asset.thumbnailDataUrl ? (
+                    <span
+                      className="mb-2 block h-24 rounded border border-white/15 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${asset.thumbnailDataUrl})` }}
+                    />
+                  ) : null}
                   <span className="block text-sm font-semibold text-white">{asset.name}</span>
                   <span className="mt-1 block text-xs text-slate-400">
-                    {asset.category} · {asset.width}x{asset.depth}
+                    {asset.category} - {asset.width}x{asset.depth}
                   </span>
                 </button>
               ))}
             </div>
 
-            <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-400">Materials</h2>
+            {uploadedAssets.length > 0 ? (
+              <div className="mt-3 rounded-md border border-white/10 bg-slate-950/40 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Uploaded assets
+                </p>
+                <div className="mt-2 grid gap-2">
+                  {uploadedAssets.map((asset) => (
+                    <div className="flex items-center justify-between gap-2" key={asset.assetId}>
+                      <span className="truncate text-xs text-slate-300">{asset.name}</span>
+                      <button
+                        className="rounded border border-rose-300/30 px-2 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-400/10"
+                        onClick={() => removeUploadedAsset(asset.assetId)}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Paint</h2>
+              <label className="cursor-pointer rounded-md border border-cyan-300/40 px-2 py-1 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-300/10">
+                Texture
+                <input
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="sr-only"
+                  onChange={uploadMaterialTexture}
+                  type="file"
+                />
+              </label>
+            </div>
             <div className="mt-4 grid gap-2">
               {scene.materials.map((material) => (
                 <button
@@ -678,10 +920,26 @@ export function EditorClient() {
                   type="button"
                 >
                   <span
-                    className="h-6 w-6 rounded border border-white/20"
-                    style={{ backgroundColor: material.color }}
+                    className="h-6 w-6 shrink-0 rounded border border-white/20 bg-cover bg-center"
+                    style={{
+                      backgroundColor: material.color,
+                      backgroundImage: material.textureDataUrl ? `url(${material.textureDataUrl})` : undefined
+                    }}
                   />
-                  {material.name}
+                  <span className="min-w-0 flex-1 truncate">{material.name}</span>
+                  {material.source === "upload" || material.source === "ai" ? (
+                    <span
+                      className="rounded border border-rose-300/30 px-2 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-400/10"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeSelectedMaterial(material.id);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      Remove
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -712,8 +970,12 @@ export function EditorClient() {
               ))}
             </div>
 
-            <div className="border-b border-white/10 px-4 py-2 text-sm text-slate-300">
-              {status}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-2 text-sm text-slate-300">
+              <span>{status}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-cyan-100">
+                Tool: {activeTool}
+                {activeTool === "furniture" && activeAsset ? ` - ${activeAsset.name}` : ""}
+              </span>
             </div>
 
             <svg
@@ -726,12 +988,30 @@ export function EditorClient() {
                 <pattern height="20" id="grid" patternUnits="userSpaceOnUse" width="20">
                   <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(148,163,184,0.22)" strokeWidth="1" />
                 </pattern>
+                {scene.materials
+                  .filter((material) => material.textureDataUrl)
+                  .map((material) => (
+                    <pattern
+                      height="80"
+                      id={patternId(material.id)}
+                      key={material.id}
+                      patternUnits="userSpaceOnUse"
+                      width="80"
+                    >
+                      <image
+                        height="80"
+                        href={material.textureDataUrl}
+                        preserveAspectRatio="xMidYMid slice"
+                        width="80"
+                      />
+                    </pattern>
+                  ))}
               </defs>
               <rect fill="url(#grid)" height={viewBox.height} width={viewBox.width} x="0" y="0" />
 
               {scene.rooms.map((room) => (
                 <polygon
-                  fill={getMaterialColor(scene, room.materialId)}
+                  fill={getMaterialFill(scene, room.materialId)}
                   fillOpacity="0.22"
                   key={room.id}
                   onClick={(event) => handleObjectClick(room.id, event)}
@@ -757,7 +1037,8 @@ export function EditorClient() {
               ))}
 
               {scene.furniture.map((object) => {
-                const color = getMaterialColor(scene, object.materialId);
+                const fill = getMaterialFill(scene, object.materialId);
+                const asset = allFurnitureAssets.find((candidate) => candidate.assetId === object.assetId);
                 const isSelected = selectedId === object.id;
                 return (
                   <g
@@ -766,7 +1047,7 @@ export function EditorClient() {
                     transform={`rotate(${object.rotation} ${object.x} ${object.y})`}
                   >
                     <rect
-                      fill={color}
+                      fill={fill}
                       fillOpacity={object.type === "window" ? 0.42 : 0.82}
                       height={object.depth}
                       rx="4"
@@ -777,6 +1058,17 @@ export function EditorClient() {
                       x={object.x - object.width / 2}
                       y={object.y - object.depth / 2}
                     />
+                    {asset?.thumbnailDataUrl && object.type === "furniture" ? (
+                      <image
+                        height={object.depth}
+                        href={asset.thumbnailDataUrl}
+                        opacity="0.92"
+                        preserveAspectRatio="xMidYMid slice"
+                        width={object.width}
+                        x={object.x - object.width / 2}
+                        y={object.y - object.depth / 2}
+                      />
+                    ) : null}
                     <text
                       fill="#f8fafc"
                       fontSize="14"
@@ -838,7 +1130,7 @@ export function EditorClient() {
                   }}
                   type="button"
                 >
-                  {object.type.toUpperCase()} · {objectLabel(object)}
+                  {object.type.toUpperCase()} - {objectLabel(object)}
                 </button>
               ))}
             </div>
@@ -953,3 +1245,4 @@ export function EditorClient() {
     </main>
   );
 }
+
