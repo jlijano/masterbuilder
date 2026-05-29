@@ -13,6 +13,7 @@ The web application uses Next.js App Router, React, TypeScript, and Tailwind CSS
 
 ## Phase 1 Status
 
-The app contains a minimal first viewport proving workspace wiring and UI package
-consumption. Dashboard, project manager, auth abstraction, and editor shell are
-scheduled for later phases.
+The deployed web app now includes a browser-first MVP for project creation, local
+project persistence, editor tools, object selection, material assignment, undo/redo,
+local AI demo actions, and JSON export. These flows intentionally use `localStorage`
+until the Phase 2 API and database modules are ready to back them.
