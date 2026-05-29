@@ -31,6 +31,9 @@ This repository includes a Render Blueprint at `render.yaml` with three resource
 
 The Blueprint keeps the repository root as the build context because this is a
 pnpm workspace and both apps depend on packages outside their app directories.
+It intentionally calls `pnpm` directly instead of `corepack enable`; Render's
+runtime image can expose package-manager shims in read-only system paths, and
+trying to overwrite them can fail the build before dependencies install.
 
 ### Render URLs
 

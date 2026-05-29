@@ -4,12 +4,14 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/api build
-    startCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @house-designer/api start
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/api build
+    startCommand: pnpm --filter @house-designer/api start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 22.13.1
       - key: APP_ENV
         value: production
       - key: CORS_ORIGIN
@@ -32,12 +34,14 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/web build
-    startCommand: corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm --filter @house-designer/web exec next start -H 0.0.0.0 -p $PORT
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @house-designer/web build
+    startCommand: pnpm --filter @house-designer/web exec next start -H 0.0.0.0 -p $PORT
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 22.13.1
       - key: NEXT_PUBLIC_APP_URL
         value: https://house-designer-web.onrender.com
       - key: NEXT_PUBLIC_API_URL
