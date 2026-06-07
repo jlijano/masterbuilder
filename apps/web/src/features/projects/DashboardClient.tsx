@@ -58,41 +58,29 @@ export function DashboardClient() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <section className="mx-auto w-full max-w-6xl">
-        <nav className="mb-10 flex flex-wrap items-center justify-between gap-4">
-          <Link className="text-sm font-semibold text-cyan-100 hover:text-cyan-50" href="/">
-            House Designer
-          </Link>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/15 bg-white/10 px-4 text-sm font-semibold text-slate-100 transition hover:bg-white/15"
-              href="/docs/architecture"
-            >
-              Architecture
-            </Link>
-            <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-400 px-4 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-              href={sortedProjects[0] ? `/editor?projectId=${sortedProjects[0].id}` : "/editor"}
-            >
-              Open editor
-            </Link>
+    <section className="px-4 py-8 md:px-6">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase text-cyan-200">Workspace</p>
+            <h2 className="mt-3 text-4xl font-semibold text-white">Project dashboard</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+              Create real local projects, open them in the editor, and export scene data. This is
+              browser persistence today and the shape the API will back in the next phase.
+            </p>
           </div>
-        </nav>
-
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-cyan-200">Workspace</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Project dashboard</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-            Create real local projects, open them in the editor, and export scene data. This is
-            browser persistence today and the shape the API will back in the next phase.
-          </p>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-400 px-4 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+            href={sortedProjects[0] ? `/editor?projectId=${sortedProjects[0].id}` : "/editor"}
+          >
+            Open editor
+          </Link>
         </div>
 
         <div className="mt-10 grid gap-5 lg:grid-cols-[1fr_22rem]">
           <section className="rounded-md border border-white/10 bg-white/[0.06] p-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-white">Projects</h2>
+              <h3 className="text-lg font-semibold text-white">Projects</h3>
               <span className="text-sm text-slate-400">{projects.length} saved locally</span>
             </div>
 
@@ -138,7 +126,7 @@ export function DashboardClient() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-white">{project.name}</h3>
+                      <h4 className="font-semibold text-white">{project.name}</h4>
                       <p className="mt-2 text-sm leading-6 text-slate-300">
                         {project.description || "No description yet."}
                       </p>
@@ -168,7 +156,7 @@ export function DashboardClient() {
           </section>
 
           <aside className="rounded-md border border-white/10 bg-white/[0.06] p-5">
-            <h2 className="text-lg font-semibold text-white">Working modules</h2>
+            <h3 className="text-lg font-semibold text-white">Working modules</h3>
             <div className="mt-5 grid gap-2">
               {modules.map((module) => (
                 <Link
@@ -182,7 +170,7 @@ export function DashboardClient() {
             </div>
           </aside>
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
