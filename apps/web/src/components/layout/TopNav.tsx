@@ -1,9 +1,7 @@
 "use client";
 
 import { Bell, ExternalLink, Menu, Search } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PRODUCT_NAME } from "@house-designer/shared";
 
 const routeTitles: Record<string, { eyebrow: string; title: string }> = {
   "/": { eyebrow: "Workspace", title: "Home" },
@@ -28,7 +26,7 @@ function getRouteTitle(pathname: string) {
   return routeTitles["/"];
 }
 
-export function TopNav() {
+export function TopNav({ onOpenMobileNav }: Readonly<{ onOpenMobileNav: () => void }>) {
   const pathname = usePathname();
   const routeTitle = getRouteTitle(pathname);
   const apiUrl = process.env["NEXT_PUBLIC_API_URL"] ?? "https://house-designer-api.onrender.com";
@@ -37,13 +35,14 @@ export function TopNav() {
     <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/88 px-4 py-3 backdrop-blur md:px-6">
       <div className="flex min-h-11 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <Link
-            aria-label={PRODUCT_NAME}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-cyan-100 transition hover:bg-white/10 lg:hidden"
-            href="/"
+          <button
+            aria-label="Open sidebar"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-cyan-100 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-300 lg:hidden"
+            onClick={onOpenMobileNav}
+            type="button"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
-          </Link>
+          </button>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase text-cyan-200">{routeTitle.eyebrow}</p>
             <h1 className="truncate text-lg font-semibold text-white md:text-xl">{routeTitle.title}</h1>
