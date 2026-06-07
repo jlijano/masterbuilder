@@ -8,6 +8,7 @@ import { TopNav } from "./TopNav";
 
 export function AppLayout({ children }: Readonly<{ children: ReactNode }>) {
   const [isSideNavCollapsed, setIsSideNavCollapsed] = useState(false);
+  const [isMobileSideNavOpen, setIsMobileSideNavOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -19,10 +20,12 @@ export function AppLayout({ children }: Readonly<{ children: ReactNode }>) {
       >
         <SideNav
           collapsed={isSideNavCollapsed}
+          mobileOpen={isMobileSideNavOpen}
+          onCloseMobile={() => setIsMobileSideNavOpen(false)}
           onToggle={() => setIsSideNavCollapsed((current) => !current)}
         />
         <div className="flex min-w-0 flex-col">
-          <TopNav />
+          <TopNav onOpenMobileNav={() => setIsMobileSideNavOpen(true)} />
           <MainContent>{children}</MainContent>
           <Footer />
         </div>
