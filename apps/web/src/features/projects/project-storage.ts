@@ -32,7 +32,7 @@ export function loadProjects(): DesignProject[] {
     "Modern Courtyard Concept",
     "A starter scene with walls, a room, materials, and furniture."
   );
-  saveProjects([sample]);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify([sample]));
   return [sample];
 }
 
