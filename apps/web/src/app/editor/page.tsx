@@ -5,9 +5,9 @@ export default function EditorPage() {
   return (
     <Suspense
       fallback={
-        <main className="grid min-h-screen place-items-center bg-slate-950 text-slate-100">
+        <div className="grid min-h-[calc(100vh-8rem)] place-items-center text-slate-100">
           <p className="text-sm font-semibold text-cyan-100">Loading editor...</p>
-        </main>
+        </div>
       }
     >
       <EditorClient />
