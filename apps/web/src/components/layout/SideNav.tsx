@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, FileText, FolderKanban, Home, LayoutDashboard, PenTool, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Home, LayoutDashboard, PenTool, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PRODUCT_NAME } from "@house-designer/shared";
