@@ -21,14 +21,14 @@ const featureCards = [
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <section className="w-full max-w-5xl">
+    <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-10 md:px-6">
+      <div className="w-full max-w-5xl">
         <div className="mb-8 inline-flex rounded-md border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-sm font-medium text-cyan-100">
           Phase 1 foundation
         </div>
-        <h1 className="max-w-4xl text-5xl font-semibold tracking-normal text-white sm:text-7xl">
+        <h2 className="max-w-4xl text-5xl font-semibold tracking-normal text-white sm:text-7xl">
           {PRODUCT_NAME}
-        </h1>
+        </h2>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
           A production-oriented monorepo foundation for a premium AI-powered house designer,
           ready for the backend, editor engine, and polished app shell phases.
@@ -59,7 +59,7 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
