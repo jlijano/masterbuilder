@@ -2,6 +2,7 @@
 
 import type { DesignProject } from "./project-types";
 import { createProject } from "./project-data";
+import { recordProjectChanges } from "./project-notifications";
 
 const STORAGE_KEY = "house-designer-projects:v1";
 
@@ -36,7 +37,9 @@ export function loadProjects(): DesignProject[] {
 }
 
 export function saveProjects(projects: DesignProject[]): void {
+  const previousProjects = readRawProjects();
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  recordProjectChanges(previousProjects, projects);
 }
 
 export function loadProject(projectId: string): DesignProject | undefined {
